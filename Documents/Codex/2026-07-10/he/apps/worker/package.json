@@ -1,0 +1,9 @@
+{
+  "name": "@placement/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "tsx watch src/main.ts", "build": "tsc", "typecheck": "tsc --noEmit", "lint": "eslint \"src/**/*.ts\"" },
+  "dependencies": { "bullmq": "^5.48.0", "ioredis": "^5.4.1" },
+  "devDependencies": { "@types/node": "^22.15.2", "eslint": "^9.24.0", "tsx": "^4.19.3", "typescript": "^5.8.3" }
+}

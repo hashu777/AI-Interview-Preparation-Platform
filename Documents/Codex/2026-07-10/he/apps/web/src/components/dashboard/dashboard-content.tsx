@@ -1,0 +1,16 @@
+'use client';
+import { useEffect, useState } from 'react';
+import type { DashboardResponse } from '@placement/contracts';
+import { getDashboard } from '../../lib/api';
+
+const labels = ['Total interviews', 'Average score', 'ATS score', 'Current streak'];
+function Skeleton() { return <div className="dashboard"><div className="skeleton title"/><div className="metrics">{labels.map((label) => <div className="card skeleton" key={label}/>)}</div><div className="panel skeleton chart"/></div>; }
+function metric(value: number | null, suffix = '') { return value === null ? '—' : `${value}${suffix}`; }
+export function DashboardContent() {
+  const [data, setData] = useState<DashboardResponse>(); const [error, setError] = useState(false);
+  useEffect(() => { getDashboard().then(setData).catch(() => setError(true)); }, []);
+  if (error) return <main className="dashboard"><div className="error"><h1>Dashboard unavailable</h1><p>Check that the API is running, then refresh this page.</p><button onClick={() => window.location.reload()}>Try again</button></div></main>;
+  if (!data) return <Skeleton/>;
+  const values = [data.metrics.totalInterviews, metric(data.metrics.averageScore, '%'), metric(data.metrics.atsScore, '%'), `${data.metrics.currentStreak} days`];
+  return <main className="dashboard"><header><p className="eyebrow">YOUR CAREER WORKSPACE</p><h1>Good morning, {data.user.name}.</h1><p className="muted">Small practice sessions create lasting confidence.</p></header><section className="metrics">{labels.map((label, i) => <article className="card" key={label}><p>{label}</p><strong>{values[i]}</strong>{i === 0 && <span>Ready when you are</span>}</article>)}</section><section className="grid"><article className="panel"><div className="panel-title"><div><p className="eyebrow">PROGRESS</p><h2>Interview performance</h2></div><span className="muted">Last 7 days</span></div><div className="graph">{data.progress.map(({ label, score }) => <div className="bar-wrap" key={label}><div className="bar" style={{ height: `${score ?? 4}%` }}/><span>{label}</span></div>)}</div><p className="empty">Complete your first interview to see your progress trend.</p></article><article className="panel"><p className="eyebrow">RECENT ACTIVITY</p><h2>Interview history</h2>{data.recentInterviews.length === 0 ? <p className="empty">No interviews yet. Your completed sessions will appear here.</p> : <ul>{data.recentInterviews.map((item) => <li key={item.id}>{item.role} · {item.company}</li>)}</ul>}</article></section></main>;
+}
