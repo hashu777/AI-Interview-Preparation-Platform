@@ -4,7 +4,7 @@ CREATE TYPE "AuthTokenType" AS ENUM ('EMAIL_VERIFICATION', 'PASSWORD_RESET');
 -- CreateTable
 CREATE TABLE "User" (
     "id" UUID NOT NULL,
-    "email" CITEXT NOT NULL,
+    "email" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
     "emailVerifiedAt" TIMESTAMP(3),
