@@ -17,6 +17,45 @@ model User {
   sessions       Session[]
   tokens         AuthToken[]
   resumes        Resume[]
+  interviewSessions InterviewSession[]
+}
+
+model InterviewSession {
+  id                   String          @id @default(uuid()) @db.Uuid
+  userId               String          @db.Uuid
+  domain               InterviewDomain
+  difficulty           InterviewDifficulty
+  durationMinutes      Int
+  status               InterviewStatus @default(IN_PROGRESS)
+  currentQuestionIndex Int             @default(0)
+  finalScore           Int?
+  startedAt            DateTime        @default(now())
+  completedAt          DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions            InterviewQuestion[]
+  @@index([userId, status, updatedAt])
+}
+
+model InterviewQuestion {
+  id        String           @id @default(uuid()) @db.Uuid
+  sessionId String           @db.Uuid
+  position  Int
+  prompt    String
+  createdAt DateTime         @default(now())
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  answer    InterviewAnswer?
+  @@unique([sessionId, position])
+}
+
+model InterviewAnswer {
+  id         String            @id @default(uuid()) @db.Uuid
+  questionId String            @unique @db.Uuid
+  content    String            @default("")
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  question   InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model Resume {
@@ -93,4 +132,21 @@ enum ResumeStatus {
   EXTRACTION_QUEUED
   EXTRACTED
   FAILED
+}
+
+enum InterviewDomain {
+  TECHNICAL
+  HR
+}
+
+enum InterviewDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum InterviewStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
 }

@@ -1,2 +1,2 @@
-const links = ['Overview', 'Practice interviews', 'Resume analysis', 'Progress'];
-export function Sidebar() { return <aside className="sidebar"><a className="brand" href="/dashboard">placement<span>mentor</span></a><nav>{links.map((link, index) => index === 0 ? <a className="active" href="/dashboard" key={link}>{link}</a> : <span className="nav-disabled" key={link} title="Coming soon">{link}</span>)}</nav><div className="sidebar-footer">Your practice space</div></aside>; }
+const links = [{ label: 'Overview', href: '/dashboard' }, { label: 'Practice interviews', href: '/interviews/setup' }, { label: 'Resume analysis', href: '/resumes' }, { label: 'Progress', href: '#progress' }];
+export function Sidebar() { return <aside className="sidebar"><a className="brand" href="/dashboard">placement<span>mentor</span></a><nav>{links.map((link) => <a href={link.href} key={link.label}>{link.label}</a>)}</nav><div className="sidebar-footer">Your practice space</div></aside>; }

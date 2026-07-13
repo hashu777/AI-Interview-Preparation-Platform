@@ -18,3 +18,19 @@ export interface DashboardResponse {
   recentInterviews: Array<{ id: string; role: string; company: string; score: number | null; completedAt: string }>;
   progress: Array<{ label: string; score: number | null }>;
 }
+
+export type InterviewDomain = 'TECHNICAL' | 'HR';
+export type InterviewDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+export type InterviewStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
+export interface InterviewSessionResponse {
+  id: string;
+  domain: InterviewDomain;
+  difficulty: InterviewDifficulty;
+  durationMinutes: number;
+  status: InterviewStatus;
+  currentQuestionIndex: number;
+  finalScore: number | null;
+  startedAt: string;
+  completedAt: string | null;
+  questions: Array<{ id: string; position: number; prompt: string; answer: { content: string } | null }>;
+}
