@@ -42,7 +42,21 @@ model ResumeVersion {
   extractedText String?
   createdAt    DateTime     @default(now())
   resume       Resume       @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  analysis     ResumeAnalysis?
   @@unique([resumeId, version])
+}
+
+model ResumeAnalysis {
+  id              String        @id @default(uuid()) @db.Uuid
+  resumeVersionId String        @unique @db.Uuid
+  score           Int
+  strengths       String[]
+  improvements    String[]
+  matchedKeywords String[]
+  missingKeywords String[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  resumeVersion   ResumeVersion @relation(fields: [resumeVersionId], references: [id], onDelete: Cascade)
 }
 
 model Session {

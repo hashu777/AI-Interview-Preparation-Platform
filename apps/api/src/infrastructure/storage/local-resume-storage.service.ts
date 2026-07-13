@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 
 @Injectable()
@@ -13,4 +13,5 @@ export class LocalResumeStorageService {
     await writeFile(destination, content, { flag: 'wx' });
     return key;
   }
+  read(storageKey: string): Promise<Buffer> { return readFile(join(this.root, ...storageKey.split('/'))); }
 }

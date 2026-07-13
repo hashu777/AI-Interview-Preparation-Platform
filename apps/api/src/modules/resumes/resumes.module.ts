@@ -3,5 +3,6 @@ import { AuthModule } from '../auth/auth.module';
 import { ResumesController } from './resumes.controller';
 import { ResumesService } from './resumes.service';
 import { LocalResumeStorageService } from '../../infrastructure/storage/local-resume-storage.service';
-@Module({ imports: [AuthModule], controllers: [ResumesController], providers: [ResumesService, LocalResumeStorageService] })
+import { AtsModule } from '../ats/ats.module';
+@Module({ imports: [AuthModule, AtsModule], controllers: [ResumesController], providers: [ResumesService, LocalResumeStorageService] })
 export class ResumesModule {}

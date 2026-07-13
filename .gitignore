@@ -4,6 +4,7 @@ node_modules/
 dist/
 coverage/
 data/resumes/
+apps/api/data/resumes/
 .env
 .env.*
 !.env.example

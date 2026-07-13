@@ -12,4 +12,5 @@ export class ResumesController {
   @Post() create(@Req() request: AuthenticatedRequest, @Body() input: CreateResumeDto) { return this.resumes.create(request.auth!.userId, input.title); }
   @Post(':resumeId/versions') @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: (_request, file, done) => done(file.mimetype === 'application/pdf' ? null : new UnsupportedMediaTypeException('Only PDF files are supported.'), file.mimetype === 'application/pdf') }))
   addVersion(@Req() request: AuthenticatedRequest, @UploadedFile() file: { originalname: string; mimetype: string; size: number; buffer: Buffer } | undefined, @Param('resumeId') resumeId: string) { if (!file) throw new UnsupportedMediaTypeException('A PDF file is required.'); return this.resumes.addVersion(request.auth!.userId, resumeId, { originalName: file.originalname, mimeType: file.mimetype, size: file.size, buffer: file.buffer }); }
+  @Post('versions/:versionId/extract') extract(@Req() request: AuthenticatedRequest, @Param('versionId') versionId: string) { return this.resumes.extractText(request.auth!.userId, versionId); }
 }

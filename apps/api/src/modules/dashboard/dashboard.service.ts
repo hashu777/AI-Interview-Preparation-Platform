@@ -8,6 +8,11 @@ export class DashboardService {
   /** Temporary empty-state source; authentication and interview persistence replace this aggregate. */
   async getDashboard(userId: string): Promise<DashboardResponse> {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
-    return { user, metrics: { totalInterviews: 0, averageScore: null, atsScore: null, currentStreak: 0 }, recentInterviews: [], progress: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((label) => ({ label, score: null })) };
+    const latestAnalysis = await this.prisma.resumeAnalysis.findFirst({
+      where: { resumeVersion: { resume: { userId } } },
+      orderBy: { updatedAt: 'desc' },
+      select: { score: true },
+    });
+    return { user, metrics: { totalInterviews: 0, averageScore: null, atsScore: latestAnalysis?.score ?? null, currentStreak: 0 }, recentInterviews: [], progress: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((label) => ({ label, score: null })) };
   }
 }
