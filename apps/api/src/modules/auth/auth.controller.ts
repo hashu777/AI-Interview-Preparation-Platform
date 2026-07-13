@@ -1,9 +1,10 @@
-import { Body, Controller, HttpCode, Post, Res } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto, TokenDto } from './auth.dto';
+import { AuthRateLimitGuard } from './guards/auth-rate-limit.guard';
 
-@Controller('auth')
+@Controller('auth') @UseGuards(AuthRateLimitGuard)
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
   @Post('register') async register(@Body() input: RegisterDto) { return this.auth.register(input); }

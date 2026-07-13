@@ -16,6 +16,33 @@ model User {
   updatedAt      DateTime  @updatedAt
   sessions       Session[]
   tokens         AuthToken[]
+  resumes        Resume[]
+}
+
+model Resume {
+  id        String          @id @default(uuid()) @db.Uuid
+  userId    String          @db.Uuid
+  title     String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions  ResumeVersion[]
+  @@index([userId, updatedAt])
+}
+
+model ResumeVersion {
+  id           String       @id @default(uuid()) @db.Uuid
+  resumeId     String       @db.Uuid
+  version      Int
+  originalName String
+  storageKey   String       @unique
+  mimeType     String
+  byteSize     Int
+  status       ResumeStatus @default(PENDING_UPLOAD)
+  extractedText String?
+  createdAt    DateTime     @default(now())
+  resume       Resume       @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  @@unique([resumeId, version])
 }
 
 model Session {
@@ -44,4 +71,12 @@ model AuthToken {
 enum AuthTokenType {
   EMAIL_VERIFICATION
   PASSWORD_RESET
+}
+
+enum ResumeStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  EXTRACTION_QUEUED
+  EXTRACTED
+  FAILED
 }
