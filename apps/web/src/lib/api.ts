@@ -17,7 +17,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return payload as T;
 }
 
-export function createInterview(input: { domain: InterviewDomain; difficulty: InterviewDifficulty; durationMinutes: number }) {
+export function createInterview(input: { domain: InterviewDomain; difficulty: InterviewDifficulty; durationMinutes: number; isVoice?: boolean }) {
   return request<InterviewSessionResponse>('/interviews', { method: 'POST', body: JSON.stringify(input) });
 }
 export function getInterview(sessionId: string) { return request<InterviewSessionResponse>(`/interviews/${sessionId}`); }

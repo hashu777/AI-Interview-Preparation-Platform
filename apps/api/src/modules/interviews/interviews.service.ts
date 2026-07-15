@@ -9,9 +9,9 @@ const includeSession = { questions: { orderBy: { position: 'asc' as const }, inc
 export class InterviewsService {
   constructor(private readonly prisma: PrismaService, private readonly questions: InterviewQuestionService) {}
 
-  create(userId: string, input: { domain: InterviewDomain; difficulty: InterviewDifficulty; durationMinutes: number }) {
+  create(userId: string, input: { domain: InterviewDomain; difficulty: InterviewDifficulty; durationMinutes: number; isVoice?: boolean }) {
     const count = Math.max(3, Math.min(8, Math.round(input.durationMinutes / 5)));
-    return this.prisma.interviewSession.create({ data: { ...input, userId, questions: { create: this.questions.generate(input.domain, input.difficulty, count) } }, include: includeSession });
+    return this.prisma.interviewSession.create({ data: { ...input, isVoice: input.isVoice ?? false, userId, questions: { create: this.questions.generate(input.domain, input.difficulty, count) } }, include: includeSession });
   }
 
   async get(userId: string, sessionId: string) {

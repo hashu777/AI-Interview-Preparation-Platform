@@ -24,6 +24,7 @@ export type InterviewDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export type InterviewStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
 export interface InterviewSessionResponse {
   id: string;
+  isVoice: boolean;
   domain: InterviewDomain;
   difficulty: InterviewDifficulty;
   durationMinutes: number;
