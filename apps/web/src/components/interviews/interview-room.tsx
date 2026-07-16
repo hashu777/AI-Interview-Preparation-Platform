@@ -48,7 +48,23 @@ export function InterviewRoom() {
   const [showTextEditor, setShowTextEditor] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-  const voiceEnabledRef = useRef(true); // Track if user wants active mic
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const voiceEnabledRef = useRef(true);
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+  }, [voiceEnabled]);
+
+  const isListeningRef = useRef(false);
+  const isSpeakingRef = useRef(false);
+  useEffect(() => {
+    isSpeakingRef.current = isSpeaking;
+  }, [isSpeaking]);
+
+  const shouldListen = !!(session?.isVoice && isSupported && voiceEnabled && !isPaused && !isSpeaking && !busy);
+  const shouldListenRef = useRef(false);
+  useEffect(() => {
+    shouldListenRef.current = shouldListen;
+  }, [shouldListen]);
 
   // Fetch session details
   useEffect(() => {
@@ -56,7 +72,7 @@ export function InterviewRoom() {
       .then((data) => {
         setSession(data);
         if (data.isVoice) {
-          voiceEnabledRef.current = true;
+          setVoiceEnabled(true);
         }
       })
       .catch((error: unknown) => {
@@ -116,43 +132,50 @@ export function InterviewRoom() {
   // Speak AI question aloud
   const speakPrompt = (text: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    // Cancel any previous synthesis
     window.speechSynthesis.cancel();
-    
+
     const cleanText = text.replace(/Give a clear example\. |Discuss your reasoning, alternatives, and trade-offs\. |Use a structured example and explain your reasoning\. /i, '');
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    
+
+    // Chrome bug workaround: speechSynthesis can get stuck and never fire onend.
+    // We keep a watchdog interval that re-pauses/resumes every 10s to keep synthesis alive,
+    // plus a hard timeout that force-resets isSpeaking if it takes too long.
+    let watchdogInterval: ReturnType<typeof setInterval> | null = null;
+    let hardTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      if (watchdogInterval) { clearInterval(watchdogInterval); watchdogInterval = null; }
+      if (hardTimeout) { clearTimeout(hardTimeout); hardTimeout = null; }
+    };
+
+    const markDone = () => {
+      cleanup();
+      isSpeakingRef.current = false;
+      setIsSpeaking(false);
+    };
+
     utterance.onstart = () => {
+      isSpeakingRef.current = true;
       setIsSpeaking(true);
-      // Mute microphone while AI is speaking
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        // eslint-disable-next-line no-empty
-        } catch {}
-      }
+      // Chrome watchdog: ping every 10s to prevent speechSynthesis from going silent
+      watchdogInterval = setInterval(() => {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        }
+      }, 10000);
+      // Hard safety timeout: if speech isn't done in 90s, force-reset
+      hardTimeout = setTimeout(markDone, 90000);
     };
-    
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      // Auto-resume microphone if enabled and not paused
-      if (voiceEnabledRef.current && !isPaused && recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-        // eslint-disable-next-line no-empty
-        } catch {}
-      }
-    };
-    
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      if (voiceEnabledRef.current && !isPaused && recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-        // eslint-disable-next-line no-empty
-        } catch {}
-      }
-    };
-    
+
+    utterance.onend = markDone;
+    utterance.onerror = markDone;
+
+    // Set speaking state immediately so mic is silenced before onstart fires
+    isSpeakingRef.current = true;
+    setIsSpeaking(true);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -174,27 +197,30 @@ export function InterviewRoom() {
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
+      isListeningRef.current = true;
       setIsListening(true);
       setMicError('');
     };
 
     recognition.onend = () => {
+      isListeningRef.current = false;
       setIsListening(false);
       setInterimText('');
-      // Keep mic running if enabled, not paused, and not speaking
-      if (voiceEnabledRef.current && !isPaused && !window.speechSynthesis.speaking) {
+
+      // Auto-restart only when we should be listening AND the AI is NOT speaking
+      if (shouldListenRef.current && !isSpeakingRef.current) {
         try {
           recognition.start();
-        // eslint-disable-next-line no-empty
-        } catch {}
+        } catch (e) {
+          console.warn('SpeechRecognition restart error in onend:', e);
+        }
       }
     };
 
     recognition.onerror = (event: { error: string }) => {
       if (event.error === 'not-allowed') {
         setMicError('Microphone permission blocked. Please allow mic access in browser settings.');
-        voiceEnabledRef.current = false;
-        setIsListening(false);
+        setVoiceEnabled(false);
       } else if (event.error === 'no-speech') {
         // ignore no speech timeouts
       } else {
@@ -224,25 +250,35 @@ export function InterviewRoom() {
 
     recognitionRef.current = recognition;
 
-    if (voiceEnabledRef.current && !isPaused) {
-      try {
-        recognition.start();
-      // eslint-disable-next-line no-empty
-      } catch {}
-    }
-
     return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        // eslint-disable-next-line no-empty
-        } catch {}
-      }
+      try {
+        recognition.abort();
+      } catch (e) {}
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
     };
-  }, [session?.isVoice, isPaused]);
+  }, [session?.isVoice]);
+
+  // Synchronize SpeechRecognition lifecycle with states
+  useEffect(() => {
+    if (!recognitionRef.current) return;
+    const recognition = recognitionRef.current;
+
+    if (shouldListen && !isListeningRef.current) {
+      try {
+        recognition.start();
+      } catch (e) {
+        // Ignore, the onend event will trigger a restart if it's currently stopping
+      }
+    } else if (!shouldListen && isListeningRef.current) {
+      try {
+        recognition.stop();
+      } catch (e) {
+        // Ignore
+      }
+    }
+  }, [shouldListen]);
 
   // Persist current answer
   async function persist() {
@@ -301,20 +337,7 @@ export function InterviewRoom() {
 
   // Toggle mic listen state
   const handleToggleMic = () => {
-    if (!recognitionRef.current) return;
-    if (isListening) {
-      voiceEnabledRef.current = false;
-      try {
-        recognitionRef.current.stop();
-      // eslint-disable-next-line no-empty
-      } catch {}
-    } else {
-      voiceEnabledRef.current = true;
-      try {
-        recognitionRef.current.start();
-      // eslint-disable-next-line no-empty
-      } catch {}
-    }
+    setVoiceEnabled((prev) => !prev);
   };
 
   // Toggle general session pause
@@ -326,10 +349,6 @@ export function InterviewRoom() {
           window.speechSynthesis.cancel();
         }
         setIsSpeaking(false);
-        try {
-          recognitionRef.current?.stop();
-        // eslint-disable-next-line no-empty
-        } catch {}
       } else {
         if (session?.isVoice && current) {
           speakPrompt(current.prompt);
@@ -449,8 +468,8 @@ export function InterviewRoom() {
 
           {/* Core controls */}
           <div className="voice-controls">
-            <button className={`secondary-button mic-toggle-btn ${isListening ? 'active-listening' : ''}`} onClick={handleToggleMic} disabled={isSpeaking || isPaused}>
-              {isListening ? (
+            <button className={`secondary-button mic-toggle-btn ${voiceEnabled ? 'active-listening' : ''}`} onClick={handleToggleMic} disabled={isSpeaking || isPaused}>
+              {voiceEnabled ? (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="2" x2="22" y1="2" y2="22"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v1.5a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
                   <span>Mute Mic</span>
