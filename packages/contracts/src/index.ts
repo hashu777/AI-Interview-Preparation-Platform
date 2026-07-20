@@ -33,5 +33,18 @@ export interface InterviewSessionResponse {
   finalScore: number | null;
   startedAt: string;
   completedAt: string | null;
+  evaluation: InterviewEvaluationResponse | null;
   questions: Array<{ id: string; position: number; prompt: string; answer: { content: string } | null }>;
+}
+
+export interface InterviewEvaluationResponse {
+  technicalAccuracy: number;
+  communication: number;
+  completeness: number;
+  confidence: number;
+  problemSolving: number;
+  overallScore: number;
+  detailedFeedback: string;
+  idealAnswer: string;
+  suggestions: string[];
 }

@@ -2,12 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InterviewDifficulty, InterviewDomain } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { InterviewQuestionService } from './interview-question.service';
+import { InterviewEvaluationService } from './interview-evaluation.service';
 
-const includeSession = { questions: { orderBy: { position: 'asc' as const }, include: { answer: { select: { content: true } } } } };
+const includeSession = { evaluation: true, questions: { orderBy: { position: 'asc' as const }, include: { answer: { select: { content: true } } } } };
 
 @Injectable()
 export class InterviewsService {
-  constructor(private readonly prisma: PrismaService, private readonly questions: InterviewQuestionService) {}
+  constructor(private readonly prisma: PrismaService, private readonly questions: InterviewQuestionService, private readonly evaluator: InterviewEvaluationService) {}
 
   create(userId: string, input: { domain: InterviewDomain; difficulty: InterviewDifficulty; durationMinutes: number; isVoice?: boolean }) {
     const count = Math.max(3, Math.min(8, Math.round(input.durationMinutes / 5)));
@@ -37,8 +38,8 @@ export class InterviewsService {
   async complete(userId: string, sessionId: string) {
     const session = await this.get(userId, sessionId);
     if (session.status === 'COMPLETED') return session;
-    const answered = session.questions.filter((question) => (question.answer?.content.trim().length ?? 0) >= 80);
-    const score = Math.round((answered.length / session.questions.length) * 100);
-    return this.prisma.interviewSession.update({ where: { id: sessionId }, data: { status: 'COMPLETED', completedAt: new Date(), finalScore: score }, include: includeSession });
+    await this.prisma.interviewSession.update({ where: { id: sessionId }, data: { status: 'COMPLETED', completedAt: new Date() } });
+    await this.evaluator.evaluate(userId, sessionId);
+    return this.get(userId, sessionId);
   }
 }

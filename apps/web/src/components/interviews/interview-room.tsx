@@ -253,7 +253,9 @@ export function InterviewRoom() {
     return () => {
       try {
         recognition.abort();
-      } catch (e) {}
+      } catch {
+        // Recognition may already be stopped during component cleanup.
+      }
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
@@ -268,13 +270,13 @@ export function InterviewRoom() {
     if (shouldListen && !isListeningRef.current) {
       try {
         recognition.start();
-      } catch (e) {
+      } catch {
         // Ignore, the onend event will trigger a restart if it's currently stopping
       }
     } else if (!shouldListen && isListeningRef.current) {
       try {
         recognition.stop();
-      } catch (e) {
+      } catch {
         // Ignore
       }
     }
@@ -363,10 +365,12 @@ export function InterviewRoom() {
   }
 
   if (session.status === 'COMPLETED') {
+    const evaluation = session.evaluation;
     return (
       <main className="interview-page">
         <p className="eyebrow">SESSION COMPLETE</p>
         <h1>Your interview score: {session.finalScore ?? 0}%</h1>
+        {evaluation && <section className="evaluation-card"><p className="muted">{evaluation.detailedFeedback}</p><div className="evaluation-scores">{[['Technical accuracy', evaluation.technicalAccuracy], ['Communication', evaluation.communication], ['Completeness', evaluation.completeness], ['Confidence', evaluation.confidence], ['Problem-solving', evaluation.problemSolving]].map(([label, score]) => <div key={String(label)}><span>{label}</span><strong>{score}/100</strong></div>)}</div><article><h2>Ideal answer approach</h2><p>{evaluation.idealAnswer}</p></article><article><h2>Improvement suggestions</h2><ul>{evaluation.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul></article></section>}
         <p className="muted">Your completed session is now included in your dashboard history and progress.</p>
         <button className="primary-button" onClick={() => router.push('/dashboard')}>View dashboard</button>
       </main>

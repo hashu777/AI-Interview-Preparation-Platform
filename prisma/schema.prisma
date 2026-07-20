@@ -36,7 +36,25 @@ model InterviewSession {
   updatedAt            DateTime        @updatedAt
   user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   questions            InterviewQuestion[]
+  evaluation           InterviewEvaluation?
   @@index([userId, status, updatedAt])
+}
+
+model InterviewEvaluation {
+  id                String           @id @default(uuid()) @db.Uuid
+  sessionId         String           @unique @db.Uuid
+  technicalAccuracy Int
+  communication     Int
+  completeness      Int
+  confidence        Int
+  problemSolving    Int
+  overallScore      Int
+  detailedFeedback  String
+  idealAnswer       String
+  suggestions       String[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  session           InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model InterviewQuestion {
