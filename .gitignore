@@ -7,5 +7,6 @@ data/resumes/
 apps/api/data/resumes/
 .env
 .env.*
+judge0/judge0.conf
 !.env.example
 *.log

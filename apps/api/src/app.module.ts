@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ResumesModule } from './modules/resumes/resumes.module';
 import { AtsModule } from './modules/ats/ats.module';
 import { InterviewsModule } from './modules/interviews/interviews.module';
+import { CodingModule } from './modules/coding/coding.module';
 
-@Module({ imports: [ConfigModule.forRoot({ isGlobal: true }), HealthModule, DashboardModule, AuthModule, ResumesModule, AtsModule, InterviewsModule] })
+@Module({ imports: [ConfigModule.forRoot({ isGlobal: true }), HealthModule, DashboardModule, AuthModule, ResumesModule, AtsModule, InterviewsModule, CodingModule] })
 export class AppModule {}

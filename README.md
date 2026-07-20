@@ -15,3 +15,14 @@ npm.cmd run dev:web
 ```
 
 The API health endpoint is `GET /v1/health`. Run `npm.cmd run lint`, `npm.cmd run typecheck`, and `npm.cmd run build` before merging.
+
+## Local coding executor
+
+The Coding Interview module sends untrusted code only to a local Judge0 sandbox, never to the NestJS API process. Configure and start it once:
+
+```cmd
+copy judge0\judge0.conf.example judge0\judge0.conf
+docker compose -f judge0\docker-compose.yml up -d
+```
+
+Set strong, distinct local passwords for `REDIS_PASSWORD` and `POSTGRES_PASSWORD` in `judge0\judge0.conf`. The executor is available only on `http://localhost:2358` and requires Docker Desktop to be running.

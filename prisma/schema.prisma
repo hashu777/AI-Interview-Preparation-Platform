@@ -18,6 +18,52 @@ model User {
   tokens         AuthToken[]
   resumes        Resume[]
   interviewSessions InterviewSession[]
+  codingSubmissions CodingSubmission[]
+}
+
+model CodingProblem {
+  id          String            @id @default(uuid()) @db.Uuid
+  slug        String            @unique
+  title       String
+  description String
+  difficulty  CodingDifficulty
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  testCases   CodingTestCase[]
+  submissions CodingSubmission[]
+}
+
+model CodingTestCase {
+  id        String        @id @default(uuid()) @db.Uuid
+  problemId String        @db.Uuid
+  input     String
+  output    String
+  isHidden  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  problem   CodingProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
+
+model CodingSubmission {
+  id                 String        @id @default(uuid()) @db.Uuid
+  userId             String        @db.Uuid
+  problemId          String        @db.Uuid
+  language           CodingLanguage
+  sourceCode         String
+  mode               CodingSubmissionMode
+  status             CodingSubmissionStatus
+  passedTestCases    Int           @default(0)
+  totalTestCases     Int           @default(0)
+  stdout             String?
+  stderr             String?
+  executionTimeMs    Int?
+  memoryKb           Int?
+  timeComplexity     String?
+  complexityFeedback String?
+  createdAt          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem            CodingProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+  @@index([problemId, createdAt])
 }
 
 model InterviewSession {
@@ -168,4 +214,30 @@ enum InterviewStatus {
   IN_PROGRESS
   COMPLETED
   ABANDONED
+}
+
+enum CodingDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum CodingLanguage {
+  JAVASCRIPT
+  PYTHON
+  JAVA
+}
+
+enum CodingSubmissionMode {
+  RUN
+  SUBMIT
+}
+
+enum CodingSubmissionStatus {
+  ACCEPTED
+  WRONG_ANSWER
+  COMPILATION_ERROR
+  RUNTIME_ERROR
+  TIME_LIMIT_EXCEEDED
+  EXECUTOR_UNAVAILABLE
 }

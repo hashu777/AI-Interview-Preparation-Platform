@@ -48,3 +48,7 @@ export interface InterviewEvaluationResponse {
   idealAnswer: string;
   suggestions: string[];
 }
+
+export type CodingLanguage = 'JAVASCRIPT' | 'PYTHON' | 'JAVA';
+export interface CodingProblemResponse { id: string; slug: string; title: string; description: string; difficulty: string; testCases: Array<{ input: string; output: string }>; starterCode?: Record<CodingLanguage, string>; }
+export interface CodingSubmissionResponse { id: string; status: string; passedTestCases: number; totalTestCases: number; stdout: string | null; stderr: string | null; executionTimeMs: number | null; memoryKb: number | null; timeComplexity: string | null; complexityFeedback: string | null; }

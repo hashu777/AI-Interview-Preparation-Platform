@@ -1,4 +1,4 @@
-import type { DashboardResponse, InterviewDifficulty, InterviewDomain, InterviewSessionResponse } from '@placement/contracts';
+import type { CodingLanguage, CodingProblemResponse, CodingSubmissionResponse, DashboardResponse, InterviewDifficulty, InterviewDomain, InterviewSessionResponse } from '@placement/contracts';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/v1';
 export async function getDashboard(): Promise<DashboardResponse> {
@@ -24,3 +24,6 @@ export function getInterview(sessionId: string) { return request<InterviewSessio
 export function saveInterviewAnswer(sessionId: string, questionId: string, content: string) { return request<InterviewSessionResponse>(`/interviews/${sessionId}/questions/${questionId}/answer`, { method: 'PATCH', body: JSON.stringify({ content }) }); }
 export function advanceInterview(sessionId: string) { return request<InterviewSessionResponse>(`/interviews/${sessionId}/advance`, { method: 'POST' }); }
 export function completeInterview(sessionId: string) { return request<InterviewSessionResponse>(`/interviews/${sessionId}/complete`, { method: 'POST' }); }
+export function getCodingProblems() { return request<CodingProblemResponse[]>('/coding/problems'); }
+export function getCodingProblem(problemId: string) { return request<CodingProblemResponse>(`/coding/problems/${problemId}`); }
+export function executeCode(problemId: string, language: CodingLanguage, sourceCode: string, submit: boolean) { return request<CodingSubmissionResponse>(`/coding/problems/${problemId}/${submit ? 'submit' : 'run'}`, { method: 'POST', body: JSON.stringify({ language, sourceCode }) }); }

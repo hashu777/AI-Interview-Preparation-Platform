@@ -1,0 +1,13 @@
+CREATE TYPE "CodingDifficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD');
+CREATE TYPE "CodingLanguage" AS ENUM ('JAVASCRIPT', 'PYTHON', 'JAVA');
+CREATE TYPE "CodingSubmissionMode" AS ENUM ('RUN', 'SUBMIT');
+CREATE TYPE "CodingSubmissionStatus" AS ENUM ('ACCEPTED', 'WRONG_ANSWER', 'COMPILATION_ERROR', 'RUNTIME_ERROR', 'TIME_LIMIT_EXCEEDED', 'EXECUTOR_UNAVAILABLE');
+CREATE TABLE "CodingProblem" ("id" UUID NOT NULL, "slug" TEXT NOT NULL, "title" TEXT NOT NULL, "description" TEXT NOT NULL, "difficulty" "CodingDifficulty" NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "CodingProblem_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "CodingTestCase" ("id" UUID NOT NULL, "problemId" UUID NOT NULL, "input" TEXT NOT NULL, "output" TEXT NOT NULL, "isHidden" BOOLEAN NOT NULL DEFAULT true, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "CodingTestCase_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "CodingSubmission" ("id" UUID NOT NULL, "userId" UUID NOT NULL, "problemId" UUID NOT NULL, "language" "CodingLanguage" NOT NULL, "sourceCode" TEXT NOT NULL, "mode" "CodingSubmissionMode" NOT NULL, "status" "CodingSubmissionStatus" NOT NULL, "passedTestCases" INTEGER NOT NULL DEFAULT 0, "totalTestCases" INTEGER NOT NULL DEFAULT 0, "stdout" TEXT, "stderr" TEXT, "executionTimeMs" INTEGER, "memoryKb" INTEGER, "timeComplexity" TEXT, "complexityFeedback" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "CodingSubmission_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "CodingProblem_slug_key" ON "CodingProblem"("slug");
+CREATE INDEX "CodingSubmission_userId_createdAt_idx" ON "CodingSubmission"("userId", "createdAt");
+CREATE INDEX "CodingSubmission_problemId_createdAt_idx" ON "CodingSubmission"("problemId", "createdAt");
+ALTER TABLE "CodingTestCase" ADD CONSTRAINT "CodingTestCase_problemId_fkey" FOREIGN KEY ("problemId") REFERENCES "CodingProblem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "CodingSubmission" ADD CONSTRAINT "CodingSubmission_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "CodingSubmission" ADD CONSTRAINT "CodingSubmission_problemId_fkey" FOREIGN KEY ("problemId") REFERENCES "CodingProblem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
