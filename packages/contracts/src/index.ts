@@ -22,10 +22,12 @@ export interface DashboardResponse {
 export type InterviewDomain = 'TECHNICAL' | 'HR';
 export type InterviewDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export type InterviewStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
+export type InterviewCompany = 'GOOGLE' | 'AMAZON' | 'MICROSOFT' | 'INFOSYS' | 'TCS' | 'ACCENTURE';
 export interface InterviewSessionResponse {
   id: string;
   isVoice: boolean;
   domain: InterviewDomain;
+  company: InterviewCompany | null;
   difficulty: InterviewDifficulty;
   durationMinutes: number;
   status: InterviewStatus;
@@ -35,6 +37,12 @@ export interface InterviewSessionResponse {
   completedAt: string | null;
   evaluation: InterviewEvaluationResponse | null;
   questions: Array<{ id: string; position: number; prompt: string; answer: { content: string } | null }>;
+}
+
+export interface CompanyPerformanceResponse {
+  company: InterviewCompany;
+  completedInterviews: number;
+  averageScore: number | null;
 }
 
 export interface InterviewEvaluationResponse {

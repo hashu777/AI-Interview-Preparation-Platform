@@ -16,7 +16,7 @@ export class DashboardService {
     const completed = await this.prisma.interviewSession.findMany({
       where: { userId, status: 'COMPLETED', completedAt: { not: null } },
       orderBy: { completedAt: 'desc' },
-      select: { id: true, domain: true, finalScore: true, completedAt: true },
+      select: { id: true, domain: true, company: true, finalScore: true, completedAt: true },
     });
     const totalScore = completed.reduce((sum, session) => sum + (session.finalScore ?? 0), 0);
     const today = new Date();
@@ -35,8 +35,10 @@ export class DashboardService {
     return {
       user,
       metrics: { totalInterviews: completed.length, averageScore: completed.length ? Math.round(totalScore / completed.length) : null, atsScore: latestAnalysis?.score ?? null, currentStreak },
-      recentInterviews: completed.slice(0, 5).map((session) => ({ id: session.id, role: `${session.domain === 'TECHNICAL' ? 'Technical' : 'HR'} interview`, company: 'Practice session', score: session.finalScore, completedAt: session.completedAt!.toISOString() })),
+      recentInterviews: completed.slice(0, 5).map((session) => ({ id: session.id, role: `${session.domain === 'TECHNICAL' ? 'Technical' : 'HR'} interview`, company: session.company ? companyLabel(session.company) : 'Practice session', score: session.finalScore, completedAt: session.completedAt!.toISOString() })),
       progress,
     };
   }
 }
+
+function companyLabel(company: string) { return company.charAt(0) + company.slice(1).toLowerCase(); }

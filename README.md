@@ -25,4 +25,6 @@ copy judge0\judge0.conf.example judge0\judge0.conf
 docker compose -f judge0\docker-compose.yml up -d
 ```
 
-Set strong, distinct local passwords for `REDIS_PASSWORD` and `POSTGRES_PASSWORD` in `judge0\judge0.conf`. The executor is available only on `http://localhost:2358` and requires Docker Desktop to be running.
+Set strong, distinct local passwords for `REDIS_PASSWORD` and `POSTGRES_PASSWORD` in `judge0\judge0.conf`. The executor is available only on `http://localhost:2358`.
+
+Judge0 1.13.x requires the legacy Linux cgroup-v1 memory hierarchy. Modern Docker Desktop on Windows runs Linux containers with cgroup v2, so its API can start but code executions fail with a missing `/sys/fs/cgroup/memory` control group. For a working local executor, run Judge0 on an Ubuntu 22.04 Linux VM or server with cgroup v1, expose port `2358` only to your trusted development network, and set `CODE_EXECUTOR_URL` in the root `.env` to that host (for example, `http://192.168.1.20:2358`). Do not run untrusted code in the NestJS API process as a workaround.

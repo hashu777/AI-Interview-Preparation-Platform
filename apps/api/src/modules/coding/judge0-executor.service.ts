@@ -1,7 +1,7 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { CodingLanguage } from '@prisma/client';
 
-type JudgeResult = { stdout?: string | null; stderr?: string | null; compile_output?: string | null; time?: string | null; memory?: number | null; status?: { id: number; description: string } };
+type JudgeResult = { stdout?: string | null; stderr?: string | null; compile_output?: string | null; message?: string | null; time?: string | null; memory?: number | null; status?: { id: number; description: string } };
 
 @Injectable()
 export class Judge0ExecutorService {
@@ -32,6 +32,18 @@ export class Judge0ExecutorService {
       });
     } catch { throw new ServiceUnavailableException('Code executor did not respond in time.'); }
     if (!response.ok) throw new ServiceUnavailableException('Code executor rejected this execution request.');
-    return response.json() as Promise<JudgeResult>;
+    const result = await response.json() as JudgeResult;
+
+    // Judge0 1.13.x relies on cgroup v1. Docker Desktop on modern Windows hosts
+    // uses cgroup v2, which makes Isolate report a misleading missing /box file.
+    // Treat this as executor infrastructure being unavailable, never as a learner's
+    // runtime error.
+    if (result.status?.id === 13 && /cgroup|\/box\//i.test(result.message ?? '')) {
+      throw new ServiceUnavailableException(
+        'The local code executor is incompatible with this Docker host. Configure a Linux cgroup-v1 Judge0 host and set CODE_EXECUTOR_URL to it.',
+      );
+    }
+
+    return result;
   }
 }

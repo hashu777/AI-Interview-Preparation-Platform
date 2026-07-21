@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InterviewDifficulty, InterviewDomain } from '@prisma/client';
+import { InterviewCompany, InterviewDifficulty, InterviewDomain } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { InterviewQuestionService } from './interview-question.service';
 import { InterviewEvaluationService } from './interview-evaluation.service';
@@ -10,9 +10,18 @@ const includeSession = { evaluation: true, questions: { orderBy: { position: 'as
 export class InterviewsService {
   constructor(private readonly prisma: PrismaService, private readonly questions: InterviewQuestionService, private readonly evaluator: InterviewEvaluationService) {}
 
-  create(userId: string, input: { domain: InterviewDomain; difficulty: InterviewDifficulty; durationMinutes: number; isVoice?: boolean }) {
+  create(userId: string, input: { domain: InterviewDomain; difficulty: InterviewDifficulty; durationMinutes: number; isVoice?: boolean; company?: InterviewCompany }) {
     const count = Math.max(3, Math.min(8, Math.round(input.durationMinutes / 5)));
-    return this.prisma.interviewSession.create({ data: { ...input, isVoice: input.isVoice ?? false, userId, questions: { create: this.questions.generate(input.domain, input.difficulty, count) } }, include: includeSession });
+    return this.prisma.interviewSession.create({ data: { ...input, isVoice: input.isVoice ?? false, userId, questions: { create: this.questions.generate(input.domain, input.difficulty, count, input.company) } }, include: includeSession });
+  }
+
+  async companyPerformance(userId: string) {
+    const companies: InterviewCompany[] = ['GOOGLE', 'AMAZON', 'MICROSOFT', 'INFOSYS', 'TCS', 'ACCENTURE'];
+    const results = await this.prisma.interviewSession.groupBy({ by: ['company'], where: { userId, company: { not: null }, status: 'COMPLETED' }, _count: { _all: true }, _avg: { finalScore: true } });
+    return companies.map((company) => {
+      const result = results.find((item) => item.company === company);
+      return { company, completedInterviews: result?._count._all ?? 0, averageScore: result?._avg.finalScore === null || result?._avg.finalScore === undefined ? null : Math.round(result._avg.finalScore) };
+    });
   }
 
   async get(userId: string, sessionId: string) {

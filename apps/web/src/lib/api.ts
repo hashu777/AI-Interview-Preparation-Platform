@@ -1,8 +1,9 @@
-import type { CodingLanguage, CodingProblemResponse, CodingSubmissionResponse, DashboardResponse, InterviewDifficulty, InterviewDomain, InterviewSessionResponse } from '@placement/contracts';
+import type { CodingLanguage, CodingProblemResponse, CodingSubmissionResponse, CompanyPerformanceResponse, DashboardResponse, InterviewCompany, InterviewDifficulty, InterviewDomain, InterviewSessionResponse } from '@placement/contracts';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/v1';
 export async function getDashboard(): Promise<DashboardResponse> {
   const response = await fetch(`${apiUrl}/dashboard`, { cache: 'no-store', credentials: 'include' });
+  if (response.status === 401) throw new Error('Authentication is required.');
   if (!response.ok) throw new Error('We could not load your dashboard.');
   return response.json() as Promise<DashboardResponse>;
 }
@@ -17,9 +18,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return payload as T;
 }
 
-export function createInterview(input: { domain: InterviewDomain; difficulty: InterviewDifficulty; durationMinutes: number; isVoice?: boolean }) {
+export function createInterview(input: { domain: InterviewDomain; difficulty: InterviewDifficulty; durationMinutes: number; isVoice?: boolean; company?: InterviewCompany }) {
   return request<InterviewSessionResponse>('/interviews', { method: 'POST', body: JSON.stringify(input) });
 }
+export function getCompanyPerformance() { return request<CompanyPerformanceResponse[]>('/interviews/company-performance'); }
 export function getInterview(sessionId: string) { return request<InterviewSessionResponse>(`/interviews/${sessionId}`); }
 export function saveInterviewAnswer(sessionId: string, questionId: string, content: string) { return request<InterviewSessionResponse>(`/interviews/${sessionId}/questions/${questionId}/answer`, { method: 'PATCH', body: JSON.stringify({ content }) }); }
 export function advanceInterview(sessionId: string) { return request<InterviewSessionResponse>(`/interviews/${sessionId}/advance`, { method: 'POST' }); }

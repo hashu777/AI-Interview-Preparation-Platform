@@ -9,6 +9,7 @@ import { InterviewsService } from './interviews.service';
 export class InterviewsController {
   constructor(private readonly interviews: InterviewsService) {}
   @Post() create(@Req() request: AuthenticatedRequest, @Body() input: CreateInterviewDto) { return this.interviews.create(request.auth!.userId, input); }
+  @Get('company-performance') companyPerformance(@Req() request: AuthenticatedRequest) { return this.interviews.companyPerformance(request.auth!.userId); }
   @Get(':sessionId') get(@Req() request: AuthenticatedRequest, @Param('sessionId') sessionId: string) { return this.interviews.get(request.auth!.userId, sessionId); }
   @Patch(':sessionId/questions/:questionId/answer') saveAnswer(@Req() request: AuthenticatedRequest, @Param('sessionId') sessionId: string, @Param('questionId') questionId: string, @Body() input: SaveAnswerDto) { return this.interviews.saveAnswer(request.auth!.userId, sessionId, questionId, input.content); }
   @Post(':sessionId/advance') advance(@Req() request: AuthenticatedRequest, @Param('sessionId') sessionId: string) { return this.interviews.advance(request.auth!.userId, sessionId); }

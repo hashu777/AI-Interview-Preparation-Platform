@@ -31,11 +31,15 @@ export class CodingService implements OnModuleInit {
     const tests = problem.testCases;
     let passed = 0; let latest: { stdout?: string | null; stderr?: string | null; compile_output?: string | null; time?: string | null; memory?: number | null; status?: { id: number; description: string } } | undefined;
     let status: CodingSubmissionStatus = 'ACCEPTED';
+    let executorError: string | null = null;
     try {
       for (const test of tests) { latest = await this.executor.execute(language, sourceCode, test.input, test.output); if (latest.status?.id === 3) passed += 1; else { status = latest.status?.id === 6 ? 'COMPILATION_ERROR' : latest.status?.id === 5 ? 'TIME_LIMIT_EXCEEDED' : latest.status?.id && latest.status.id >= 7 ? 'RUNTIME_ERROR' : 'WRONG_ANSWER'; break; } }
-    } catch { status = 'EXECUTOR_UNAVAILABLE'; }
+    } catch (error) {
+      status = 'EXECUTOR_UNAVAILABLE';
+      executorError = error instanceof Error ? error.message : 'Code executor is unavailable.';
+    }
     const complexity = this.complexity(sourceCode);
-    const submission = await this.prisma.codingSubmission.create({ data: { userId, problemId, language, sourceCode, mode, status, passedTestCases: passed, totalTestCases: tests.length, stdout: latest?.stdout ?? null, stderr: latest?.stderr ?? latest?.compile_output ?? null, executionTimeMs: latest?.time ? Math.round(Number(latest.time) * 1000) : null, memoryKb: latest?.memory ?? null, timeComplexity: complexity.value, complexityFeedback: complexity.feedback } });
+    const submission = await this.prisma.codingSubmission.create({ data: { userId, problemId, language, sourceCode, mode, status, passedTestCases: passed, totalTestCases: tests.length, stdout: latest?.stdout ?? null, stderr: latest?.stderr ?? latest?.compile_output ?? executorError, executionTimeMs: latest?.time ? Math.round(Number(latest.time) * 1000) : null, memoryKb: latest?.memory ?? null, timeComplexity: complexity.value, complexityFeedback: complexity.feedback } });
     return submission;
   }
   private complexity(source: string) { const loops = (source.match(/\b(for|while)\b/g) ?? []).length; if (/\.sort\s*\(/.test(source)) return { value: 'O(n log n)', feedback: 'Sorting is detected. This is usually efficient, but a hash-map approach can solve Two Sum in O(n).' }; if (loops >= 2) return { value: 'O(n²) estimated', feedback: 'Nested iteration is likely quadratic. For Two Sum, use a hash map to reach O(n) time.' }; if (loops === 1) return { value: 'O(n) estimated', feedback: 'A single pass is detected. For this problem, a hash map gives O(n) time and O(n) space.' }; return { value: 'Not enough structure to estimate', feedback: 'Add a complete solution before relying on a complexity estimate.' }; }

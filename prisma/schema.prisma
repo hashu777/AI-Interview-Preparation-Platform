@@ -71,6 +71,7 @@ model InterviewSession {
   userId               String          @db.Uuid
   isVoice              Boolean         @default(false)
   domain               InterviewDomain
+  company              InterviewCompany?
   difficulty           InterviewDifficulty
   durationMinutes      Int
   status               InterviewStatus @default(IN_PROGRESS)
@@ -84,6 +85,7 @@ model InterviewSession {
   questions            InterviewQuestion[]
   evaluation           InterviewEvaluation?
   @@index([userId, status, updatedAt])
+  @@index([userId, company, status])
 }
 
 model InterviewEvaluation {
@@ -202,6 +204,15 @@ enum ResumeStatus {
 enum InterviewDomain {
   TECHNICAL
   HR
+}
+
+enum InterviewCompany {
+  GOOGLE
+  AMAZON
+  MICROSOFT
+  INFOSYS
+  TCS
+  ACCENTURE
 }
 
 enum InterviewDifficulty {

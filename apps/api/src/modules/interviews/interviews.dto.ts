@@ -1,9 +1,10 @@
-import { InterviewDifficulty, InterviewDomain } from '@prisma/client';
+import { InterviewCompany, InterviewDifficulty, InterviewDomain } from '@prisma/client';
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 
 export class CreateInterviewDto {
   @IsEnum(InterviewDomain) domain!: InterviewDomain;
   @IsEnum(InterviewDifficulty) difficulty!: InterviewDifficulty;
+  @IsEnum(InterviewCompany) @IsOptional() company?: InterviewCompany;
   @IsInt() @Min(5) @Max(60) durationMinutes!: number;
   @IsBoolean() @IsOptional() isVoice?: boolean;
 }
