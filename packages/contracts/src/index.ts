@@ -19,6 +19,14 @@ export interface DashboardResponse {
   progress: Array<{ label: string; score: number | null }>;
 }
 
+export interface AnalyticsResponse {
+  interviewScoreTrend: Array<{ label: string; score: number | null }>;
+  atsImprovement: Array<{ label: string; score: number }>;
+  skillBreakdown: Array<{ skill: string; score: number | null }>;
+  weeklyProgress: Array<{ label: string; completedInterviews: number; averageScore: number | null }>;
+  monthlyProgress: Array<{ label: string; completedInterviews: number; averageScore: number | null }>;
+}
+
 export type InterviewDomain = 'TECHNICAL' | 'HR';
 export type InterviewDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export type InterviewStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';

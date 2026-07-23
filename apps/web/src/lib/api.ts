@@ -1,4 +1,4 @@
-import type { CodingLanguage, CodingProblemResponse, CodingSubmissionResponse, CompanyPerformanceResponse, DashboardResponse, InterviewCompany, InterviewDifficulty, InterviewDomain, InterviewSessionResponse } from '@placement/contracts';
+import type { AnalyticsResponse, CodingLanguage, CodingProblemResponse, CodingSubmissionResponse, CompanyPerformanceResponse, DashboardResponse, InterviewCompany, InterviewDifficulty, InterviewDomain, InterviewSessionResponse } from '@placement/contracts';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/v1';
 export async function getDashboard(): Promise<DashboardResponse> {
@@ -7,6 +7,7 @@ export async function getDashboard(): Promise<DashboardResponse> {
   if (!response.ok) throw new Error('We could not load your dashboard.');
   return response.json() as Promise<DashboardResponse>;
 }
+export function getAnalytics() { return request<AnalyticsResponse>('/analytics'); }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { credentials: 'include', ...options, headers: { 'Content-Type': 'application/json', ...options?.headers } });
